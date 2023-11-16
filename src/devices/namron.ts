@@ -151,6 +151,30 @@ const definitions: Definition[] = [
             await reporting.bind(endpoint, coordinatorEndpoint, ['genOnOff', 'genLevelCtrl']);
             await reporting.onOff(endpoint);
         },
+    {
+        zigbeeModel: ['4512767'],
+        model: '4512767',
+        vendor: 'Namron',
+        description: 'Zigbee outlet socket 3600W',
+        fromZigbee: [fromZigbee_1.default.metering, fromZigbee_1.default.electrical_measurement],
+        exposes: [e.power(), e.current(), e.voltage(), e.energy()],
+        extend: extend_1.default.switch(),
+        configure: async (device, coordinatorEndpoint, logger) => {
+            const endpoint = device.getEndpoint(1) || device.getEndpoint(3);
+            const binds = [
+                 'seMetering', 'haElectricalMeasurement', 'genOnOff',
+            ];
+            await reporting.bind(endpoint, coordinatorEndpoint, binds);
+            await reporting.onOff(endpoint);
+            // Metering
+            await reporting.readEletricalMeasurementMultiplierDivisors(endpoint);
+            await reporting.readMeteringMultiplierDivisor(endpoint);
+            await reporting.rmsVoltage(endpoint, { min: 10, change: 20 }); // Voltage - Min change of 2v
+            await reporting.rmsCurrent(endpoint, { min: 10, change: 10 }); // A - z2m displays only the first decimals, so change of 10 (0,01)
+            await reporting.activePower(endpoint, { min: 10, change: 15 }); // W - Min change of 1,5W
+            await reporting.currentSummDelivered(endpoint, { min: 300 }); // Report KWH every 5min
+        },
+        ota: ota.zigbeeOTA,
     },
     {
         zigbeeModel: ['1402767'],
